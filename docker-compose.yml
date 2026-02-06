@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  xray:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        XRAY_VERSION: "26.1.13"
+    container_name: xray-ubuntu
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "127.0.0.1:10808:10808"
+    volumes:
+      - ./xray/config.json:/etc/xray/config.json:ro
+    environment:
+      - XRAY_CONFIG=/etc/xray/config.json
+      - XRAY_TRANSPARENT_PORT=12345
+      - XRAY_ROUTE_CIDRS=172.64.0.0/24 8.47.0.0/24
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "xray run -test -c /etc/xray/config.json"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
