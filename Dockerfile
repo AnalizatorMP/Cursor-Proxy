@@ -22,6 +22,7 @@ RUN set -eux; \
       armhf) xray_arch="arm32-v7a" ;; \
       *) echo "Unsupported architecture: $arch"; exit 1 ;; \
     esac; \
+    install -d /usr/local/share/xray; \
     curl -fsSL "https://github.com/XTLS/Xray-core/releases/download/v${XRAY_VERSION}/Xray-linux-${xray_arch}.zip" -o /tmp/xray.zip; \
     unzip /tmp/xray.zip -d /tmp/xray; \
     install -m 755 /tmp/xray/xray /usr/local/bin/xray; \
