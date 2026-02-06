@@ -48,7 +48,29 @@ $required = @(
 
 foreach ($cidr in $required) {
   if ($rules -notmatch [regex]::Escape($cidr)) {
-    Write-Error \"Missing iptables rule for $cidr\"
+    Write-Error "Missing iptables rule for $cidr"
+    exit 1
+  }
+}
+
+$hosts = $null
+try {
+  $hosts = docker exec xray-ubuntu getent ahosts ifconfig.me
+} catch {
+  $hosts = $null
+}
+
+if ($hosts) {
+  $ips = $hosts | ForEach-Object { ($_ -split '\s+')[0] } | Where-Object { $_ -match '^\d+\.' } | Sort-Object -Unique
+  $matched = $false
+  foreach ($ip in $ips) {
+    if ($rules -match [regex]::Escape("$ip/32")) {
+      $matched = $true
+      break
+    }
+  }
+  if (-not $matched) {
+    Write-Error 'Missing iptables rule for ifconfig.me IPs'
     exit 1
   }
 }

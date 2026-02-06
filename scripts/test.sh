@@ -45,4 +45,19 @@ for cidr in "${required[@]}"; do
   echo "$rules" | grep -q "$cidr" || { echo "Missing iptables rule for $cidr" >&2; exit 1; }
 done
 
+if docker exec xray-ubuntu getent ahosts ifconfig.me >/dev/null 2>&1; then
+  ips=$(docker exec xray-ubuntu getent ahosts ifconfig.me | awk '{print $1}' | grep -E '^[0-9]+\\.' | sort -u)
+  matched=0
+  for ip in $ips; do
+    if echo "$rules" | grep -q "${ip}/32"; then
+      matched=1
+      break
+    fi
+  done
+  if [[ "$matched" -eq 0 ]]; then
+    echo "Missing iptables rule for ifconfig.me IPs" >&2
+    exit 1
+  fi
+fi
+
 echo "All tests passed"

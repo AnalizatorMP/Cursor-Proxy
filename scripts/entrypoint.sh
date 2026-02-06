@@ -3,7 +3,14 @@ set -euo pipefail
 
 CONFIG_PATH="${XRAY_CONFIG:-/etc/xray/config.json}"
 TPROXY_PORT="${XRAY_TRANSPARENT_PORT:-12345}"
-IFS=' ' read -r -a ROUTE_CIDRS <<< "${XRAY_ROUTE_CIDRS:-172.64.0.0/24 8.47.0.0/24}"
+ROUTE_CIDRS=()
+if [[ -n "${XRAY_ROUTE_CIDRS:-}" ]]; then
+  IFS=' ' read -r -a ROUTE_CIDRS <<< "${XRAY_ROUTE_CIDRS}"
+fi
+ROUTE_DOMAINS=()
+if [[ -n "${XRAY_ROUTE_DOMAINS:-}" ]]; then
+  IFS=' ' read -r -a ROUTE_DOMAINS <<< "${XRAY_ROUTE_DOMAINS}"
+fi
 CHAIN="XRAY"
 
 if ! command -v xray >/dev/null 2>&1; then
@@ -18,6 +25,21 @@ fi
 
 # Validate config before starting
 xray run -test -c "$CONFIG_PATH"
+
+# Resolve domains to IPs and append to CIDR list
+if (( ${#ROUTE_DOMAINS[@]} > 0 )); then
+  for domain in "${ROUTE_DOMAINS[@]}"; do
+    while read -r ip _; do
+      [[ "$ip" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] || continue
+      ROUTE_CIDRS+=("${ip}/32")
+    done < <(getent ahosts "$domain" | sort -u)
+  done
+fi
+
+if (( ${#ROUTE_CIDRS[@]} == 0 )); then
+  echo "No route CIDRs or domains configured (XRAY_ROUTE_CIDRS / XRAY_ROUTE_DOMAINS)" >&2
+  exit 1
+fi
 
 # Setup iptables rules for selected CIDRs
 iptables -t nat -N "$CHAIN" 2>/dev/null || true
