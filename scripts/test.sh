@@ -29,7 +29,20 @@ fi
 
 rules=$(docker exec xray-ubuntu iptables -t nat -S XRAY)
 
-echo "$rules" | grep -q "172.64.0.0/24" || { echo "Missing iptables rule for 172.64.0.0/24" >&2; exit 1; }
-echo "$rules" | grep -q "8.47.0.0/24" || { echo "Missing iptables rule for 8.47.0.0/24" >&2; exit 1; }
+required=(
+  "13.107.0.0/16"
+  "18.66.0.0/16"
+  "20.118.0.0/16"
+  "23.35.0.0/16"
+  "104.18.0.0/16"
+  "142.250.0.0/16"
+  "172.64.0.0/16"
+  "184.105.0.0/16"
+  "188.114.0.0/16"
+)
+
+for cidr in "${required[@]}"; do
+  echo "$rules" | grep -q "$cidr" || { echo "Missing iptables rule for $cidr" >&2; exit 1; }
+done
 
 echo "All tests passed"

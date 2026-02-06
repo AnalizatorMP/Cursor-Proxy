@@ -16,7 +16,7 @@ services:
     environment:
       - XRAY_CONFIG=/etc/xray/config.json
       - XRAY_TRANSPARENT_PORT=12345
-      - XRAY_ROUTE_CIDRS=172.64.0.0/24 8.47.0.0/24
+      - XRAY_ROUTE_CIDRS=13.107.0.0/16 18.66.0.0/16 20.118.0.0/16 23.35.0.0/16 104.18.0.0/16 142.250.0.0/16 172.64.0.0/16 184.105.0.0/16 188.114.0.0/16
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "xray run -test -c /etc/xray/config.json"]

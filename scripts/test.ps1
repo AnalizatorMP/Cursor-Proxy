@@ -34,13 +34,23 @@ if ($ss -notmatch '12345') {
 }
 
 $rules = docker exec xray-ubuntu iptables -t nat -S XRAY
-if ($rules -notmatch '172.64.0.0/24') {
-  Write-Error 'Missing iptables rule for 172.64.0.0/24'
-  exit 1
-}
-if ($rules -notmatch '8.47.0.0/24') {
-  Write-Error 'Missing iptables rule for 8.47.0.0/24'
-  exit 1
+$required = @(
+  '13.107.0.0/16',
+  '18.66.0.0/16',
+  '20.118.0.0/16',
+  '23.35.0.0/16',
+  '104.18.0.0/16',
+  '142.250.0.0/16',
+  '172.64.0.0/16',
+  '184.105.0.0/16',
+  '188.114.0.0/16'
+)
+
+foreach ($cidr in $required) {
+  if ($rules -notmatch [regex]::Escape($cidr)) {
+    Write-Error \"Missing iptables rule for $cidr\"
+    exit 1
+  }
 }
 
 Write-Host 'All tests passed'
